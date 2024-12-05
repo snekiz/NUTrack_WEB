@@ -11,17 +11,34 @@
         <div class="logo">
             <img src="img/nulogo.png" class="nulogo" alt="nulogo">
             <span class="logo-text">NUTrack</span>
-          </div>
+        </div>
         <nav class="nav-links">
-          <a href="#Dashboard">Dashboard</a>
-          <a href="#MyAccount">My Account</a>
-          <a href="Login.html">Logout</a>
+            <a href="Dashboard.html">Dashboard</a>
+            <a href="#MyAccount">My Account</a>
+            <a href="Login.html">Logout</a>
         </nav>
-      </div>
+    </div>
     
-      <div class="header">
+    <div class="header">
         <h1>NUTrack Dashboard</h1>
         <p>This is where the requests are displayed.</p>
-      </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>RequestID</th>
+                    <th>StudentID</th>
+                    <th>Form Type</th>
+                    <th>Request Date</th>
+                    <th>Clearance</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php include 'fetch_requests.php'; ?>
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>

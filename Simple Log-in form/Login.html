@@ -14,12 +14,13 @@
         <div class="login-header">
             <header>Login</header>
         </div>
-        <div class="input-box">
-            <input type="number" class="input-field" placeholder="EmployeeID" autocomplete="off" required>
-        </div>
-        <div class="input-box">
-            <input type="password" class="input-field" placeholder="Password" autocomplete="off" required>
-        </div>
+        <form action="login.php" method="POST">
+            <div class="input-box">
+                <input type="number" name="employeeID" class="input-field" placeholder="EmployeeID" autocomplete="off" required>
+            </div>
+            <div class="input-box">
+                <input type="password" name="password" class="input-field" placeholder="Password" autocomplete="off" required>
+            </div>  
         <div class="forgot">
             <section>
                 <input type="checkbox" id="check">
@@ -33,6 +34,7 @@
             <button class="submit-btn" id="submit"></button>
             <label for="submit">Sign In</label>
         </div>
+    </form>
         <div class="sign-up-link">
             <p>Don't have an account? <a href="Signup.html">Sign Up</a></p>
         </div>

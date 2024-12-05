@@ -1,18 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap');
 
-*{
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     font-family: 'Poppins', sans-serif;
 }
-body{
+
+body {
     display: flex;
+    flex-direction: column;
     background: #fff;
 }
+
 .top-bar {
-    position: fixed;
-    top: 0;
     width: 100%;
     background-color: #35408E; 
     color: white;
@@ -22,41 +23,74 @@ body{
     padding: 10px 20px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     z-index: 1000;
-  }
-  
-  .top-bar .title {
-    font-size: 1.5em;
-    font-weight: bold;
-  }
-  
-  .nav-links a {
+}
+
+.nav-links a {
     color: #ffd41c;
     text-decoration: none;
     margin-left: 15px;
     font-size: 1em;
-  }
-  
-  .nav-links a:hover {
+}
+
+.nav-links a:hover {
     text-decoration: underline;
-  }
-  
-  .header {
-    padding: 80px 20px; 
-  }
-.logo{
+}
+
+.logo {
     display: flex;
     align-items: center;
 }
-.nulogo{
+
+.nulogo {
     height: 50px; 
     width: auto;
     display: block; 
-  }
-  .logo-text {
+}
+
+.logo-text {
     margin-left: 5px; 
     font-size: 1.5em; 
     font-weight: bold;
     color: white;
-  }
-  
-  
+}
+
+.header {
+    padding: 20px;
+    text-align: center;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+}
+
+.table-container {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+table {
+    width: 100%;
+    max-width: 800px; 
+    border-collapse: collapse;
+    margin: 0 auto;
+    font-size: 1em;
+    text-align: left;
+}
+
+table thead tr {
+    background-color: #35408E;
+    color: #ffffff;
+    text-align: center;
+}
+
+table th, table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+}
+
+table tbody tr:nth-child(even) {
+    background-color: #f3f3f3;
+}
+
+table tbody tr:hover {
+    background-color: #f1f1f1;
+}
