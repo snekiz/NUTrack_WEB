@@ -2,27 +2,25 @@
 include 'db_connect.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $firstName = $_POST['firstName'];
-    $lastName = $_POST['lastName'];
-    $email = $_POST['email'];
-    $employeeID = $_POST['employeeID'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $firstName = $conn->real_escape_string(trim($_POST['firstName']));
+    $lastName = $conn->real_escape_string(trim($_POST['lastName']));
+    $email = $conn->real_escape_string(trim($_POST['email']));
+    $employeeID = $conn->real_escape_string(trim($_POST['employeeID']));
+    $password = $conn->real_escape_string(trim($_POST['password']));
 
-    $sql = "INSERT INTO users (first_name, last_name, email, employee_id, password) 
-            VALUES ('$firstName', '$lastName', '$email', '$employeeID', '$password')";
+    $sql = "INSERT INTO tbl_employeeacc (employee_id, e_FirstName, e_LastName, e_Email, e_Password) 
+            VALUES ('$employeeID', '$firstName', '$lastName', '$email', '$password')";
 
     if ($conn->query($sql) === TRUE) {
-        echo "Signup successful!";
+        header("Location: login.php?signup=success");
+        exit();
     } else {
-        echo "Error: " . $sql . "<br>" . $conn->error;
+        echo "Error: " . $conn->error;
     }
 
     $conn->close();
 }
 ?>
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="signup-box">
         <div class="logo">
-            <img src="img/nulogo.png" class="nulogo" alt="nulogo">
+            <img src="img/nulogo.png" class="nulogo" alt="NU logo">
         </div>
         <div class="signup-header">
             <header>Signup</header>
@@ -47,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="text" name="lastName" class="input-field" placeholder="Last name" autocomplete="off" required>
             </div>
             <div class="input-box">
-                <input type="text" name="email" class="input-field" placeholder="Email" autocomplete="off" required>
+                <input type="email" name="email" class="input-field" placeholder="Email" autocomplete="off" required>
             </div>
             <div class="input-box">
                 <input type="number" name="employeeID" class="input-field" placeholder="EmployeeID" autocomplete="off" required>
@@ -60,13 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </form>        
         <div class="sign-up-link">
-            <p>Already have an account? <a href="login.php">Login here</a></p>
+            <p>Already have an account? <a href="index.php">Login here</a></p>
         </div>
     </div>
-    <script>
-        document.getElementById('submit').addEventListener('click', function () {
-            window.location.href = 'login.php';
-        });
-    </script>
 </body>
 </html>
