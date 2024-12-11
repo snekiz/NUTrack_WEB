@@ -1,2 +1,3 @@
 # NUTrack
- A simple website featuring sign-in and sign-up forms, themed to NU. Used HTML, CSS and JS.
+A simple website for registrar staff's to manage student forms requests. 
+Used HTML, CSS and PHP for backend.
