@@ -61,18 +61,14 @@ body {
 }
 
 .table-container {
-    padding: 20px;
-    display: flex;
-    justify-content: center;
+    margin: 20px auto;
+    width: 90%;
 }
 
 table {
     width: 100%;
-    max-width: 800px; 
     border-collapse: collapse;
-    margin: 0 auto;
-    font-size: 1em;
-    text-align: left;
+    margin-bottom: 10px;
 }
 
 table thead tr {
@@ -83,7 +79,12 @@ table thead tr {
 
 table th, table td {
     border: 1px solid #ddd;
-    padding: 12px;
+    text-align: center;
+    padding: 8px;
+}
+table th {
+    background-color: #35408E;
+    color: white;
 }
 
 table tbody tr:nth-child(even) {
@@ -93,6 +94,44 @@ table tbody tr:nth-child(even) {
 table tbody tr:hover {
     background-color: #f1f1f1;
     cursor: pointer;
+}
+.pagination-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+    width: 100%;
+}
+.pagination-container span {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.pagination {
+    display: flex;
+    gap: 10px;
+}
+
+.pagination a {
+    text-decoration: none;
+    color: #141E46;
+    padding: 5px 10px;
+    border: 1px solid #141E46;
+    border-radius: 4px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.pagination a:hover {
+    background-color: #141E46;
+    color: white;
+}
+
+.pagination a:disabled {
+    color: #aaa;
+    border-color: #aaa;
+    pointer-events: none;
 }
 .modal {
     display: none;
