@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             VALUES ('$employeeID', '$firstName', '$lastName', '$email', '$password')";
 
     if ($conn->query($sql) === TRUE) {
-        header("Location: login.php?signup=success");
+        header("Location: index.php?signup=success");
         exit();
     } else {
         echo "Error: " . $conn->error;
