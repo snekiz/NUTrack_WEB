@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="style.css">
     <title>Login</title>
 </head>
-<body>
+<body class="login_signup_body">
     <div class="login-box">
         <div class="logo">
             <img src="img/nulogo.png" class="nulogo" alt="NU logo">

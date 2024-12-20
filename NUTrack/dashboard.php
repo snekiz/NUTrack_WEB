@@ -1,35 +1,75 @@
 <?php
 include 'db_connect.php';
 
-$rowsPerPage = 5;
+$rowsPerPage = 10;
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$offset = ($page - 1) * $rowsPerPage; 
+$offset = ($page - 1) * $rowsPerPage;
 
-$sql = "SELECT COUNT(*) as totalRows FROM tbl_requests";
-$totalResult = $conn->query($sql);
+$status = isset($_GET['status']) ? $_GET['status'] : null;
+$search = isset($_GET['search']) ? $_GET['search'] : null;
+
+$sql = "SELECT request_id, student_id, form_type, request_date, clearance, status FROM tbl_requests WHERE 1=1";
+
+if ($status) {
+    $sql .= " AND status = ?";
+}
+
+if ($search) {
+    $sql .= " AND request_id = ?";
+}
+
+$sql .= " LIMIT $rowsPerPage OFFSET $offset";
+
+$stmt = $conn->prepare($sql);
+
+if ($status && $search) {
+    $stmt->bind_param("ss", $status, $search);
+} elseif ($status) {
+    $stmt->bind_param("s", $status);
+} elseif ($search) {
+    $stmt->bind_param("s", $search);
+}
+
+$stmt->execute();
+$result = $stmt->get_result();
+
+$sqlCount = "SELECT COUNT(*) as totalRows FROM tbl_requests WHERE 1=1";
+if ($status) {
+    $sqlCount .= " AND status = ?";
+}
+if ($search) {
+    $sqlCount .= " AND request_id = ?";
+}
+$stmtCount = $conn->prepare($sqlCount);
+if ($status && $search) {
+    $stmtCount->bind_param("ss", $status, $search);
+} elseif ($status) {
+    $stmtCount->bind_param("s", $status);
+} elseif ($search) {
+    $stmtCount->bind_param("s", $search);
+}
+$stmtCount->execute();
+$totalResult = $stmtCount->get_result();
 $totalRows = $totalResult->fetch_assoc()['totalRows'];
 $totalPages = ceil($totalRows / $rowsPerPage);
-
-$sql = "SELECT request_id, student_id, form_type, request_date, clearance, status 
-        FROM tbl_requests 
-        LIMIT $rowsPerPage OFFSET $offset";
-$result = $conn->query($sql);
 
 if (isset($_POST['save_changes'])) {
     $requestId = $_POST['request_id'];
     $clearance = $_POST['clearance'];
     $status = $_POST['status'];
+    $currentStatus = isset($_POST['current_status']) ? $_POST['current_status'] : '';
+    
+        $sqlUpdate = "UPDATE tbl_requests SET clearance = ?, status = ? WHERE request_id = ?";
+        $stmtUpdate = $conn->prepare($sqlUpdate);
+        $stmtUpdate->bind_param("ssi", $clearance, $status, $requestId);
 
-    $sql = "UPDATE tbl_requests SET clearance = ?, status = ? WHERE request_id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssi", $clearance, $status, $requestId);
+        if ($stmtUpdate->execute()) {
+            echo "<script>alert('Request updated successfully.'); window.location.href='dashboard.php?status=$currentStatus';</script>";
+        } else {
+            echo "<script>alert('Error updating request.');</script>";
+        }
+    } 
 
-    if ($stmt->execute()) {
-        echo "<script>alert('Request updated successfully.'); window.location.href='dashboard.php';</script>";
-    } else {
-        echo "<script>alert('Error updating request.');</script>";
-    }
-}
 
 if (isset($_POST['delete_request'])) {
     $requestId = $_POST['request_id'];
@@ -63,13 +103,13 @@ if (isset($_POST['delete_request'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="style.css">
     <title>Dashboard</title>
 </head>
-<body>
+<body class="dashboard_body">
     <div class="top-bar">
-        <div class="logo">
-            <img src="img/nulogo.png" class="nulogo" alt="NU logo">
+        <div class="dashboard_logo">
+            <img src="img/nulogo.png" class="dashboard_nulogo" alt="NU logo">
             <span class="logo-text">NUTrack</span>
         </div>
         <nav class="nav-links">
@@ -80,59 +120,76 @@ if (isset($_POST['delete_request'])) {
 
     <div class="header">
         <h1>NUTrack Dashboard</h1>
-        <p>This is where the requests are displayed.</p>
+        <p>Filter and manage requests by status.</p>
+    </div>
+
+    <div class="filter-buttons">
+        <a href="dashboard.php?status=validating" 
+           class="filter-btn <?php echo (isset($_GET['status']) && $_GET['status'] == 'validating') ? 'active' : ''; ?>">Validating</a>
+        <a href="dashboard.php?status=processing" 
+           class="filter-btn <?php echo (isset($_GET['status']) && $_GET['status'] == 'processing') ? 'active' : ''; ?>">Processing</a>
+        <a href="dashboard.php?status=ready to pickup" 
+           class="filter-btn <?php echo (isset($_GET['status']) && $_GET['status'] == 'ready to pickup') ? 'active' : ''; ?>">Ready to Pickup</a>
+    </div>
+
+    <div class="search-container">
+        <form method="GET" action="dashboard.php">
+            <input type="text" name="search" placeholder="Search by Request ID" value="<?php echo htmlspecialchars($search); ?>" class="search-bar">
+            <button type="submit" class="search-btn">Search</button>
+        </form>
     </div>
 
     <div class="table-container">
-    <table>
-        <thead>
-            <tr>
-                <th>RequestID</th>
-                <th>StudentID</th>
-                <th>Form Type</th>
-                <th>Request Date</th>
-                <th>Clearance</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php
-            if ($result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
-                    echo "<tr onclick=\"showModal('{$row['request_id']}', '{$row['student_id']}', '{$row['form_type']}', '{$row['request_date']}', '{$row['clearance']}', '{$row['status']}')\">
-                            <td>{$row['request_id']}</td>
-                            <td>{$row['student_id']}</td>
-                            <td>{$row['form_type']}</td>
-                            <td>{$row['request_date']}</td>
-                            <td>{$row['clearance']}</td>
-                            <td>{$row['status']}</td>
-                          </tr>";
+        <table>
+            <thead>
+                <tr>
+                    <th>RequestID</th>
+                    <th>StudentID</th>
+                    <th>Form Type</th>
+                    <th>Request Date</th>
+                    <th>Clearance</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                if ($result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        echo "<tr onclick=\"showModal('{$row['request_id']}', '{$row['student_id']}', '{$row['form_type']}', '{$row['request_date']}', '{$row['clearance']}', '{$row['status']}')\">
+                                <td>{$row['request_id']}</td>
+                                <td>{$row['student_id']}</td>
+                                <td>{$row['form_type']}</td>
+                                <td>{$row['request_date']}</td>
+                                <td>{$row['clearance']}</td>
+                                <td>{$row['status']}</td>
+                              </tr>";
+                    }
+                } else {
+                    echo "<tr><td colspan='6'>No requests found</td></tr>";
                 }
-            } else {
-                echo "<tr><td colspan='6'>No requests found</td></tr>";
-            }
-            ?>
-        </tbody>
-    </table>
-</div>
-
-<div class="pagination-container">
-    <span>Page <?php echo $page; ?> of <?php echo $totalPages; ?></span>
-    <div class="pagination">
-        <?php if ($page > 1): ?>
-            <a href="?page=<?php echo $page - 1; ?>">Previous</a>
-        <?php endif; ?>
-
-        <?php if ($page < $totalPages): ?>
-            <a href="?page=<?php echo $page + 1; ?>">Next</a>
-        <?php endif; ?>
+                ?>
+            </tbody>
+        </table>
     </div>
-</div>
+
+    <div class="pagination-container">
+        <span>Page <?php echo $page; ?> of <?php echo $totalPages; ?></span>
+        <div class="pagination">
+            <?php if ($page > 1): ?>
+                <a href="?page=<?php echo $page - 1; ?><?php echo $status ? '&status=' . $status : ''; ?><?php echo $search ? '&search=' . $search : ''; ?>">Previous</a>
+            <?php endif; ?>
+
+            <?php if ($page < $totalPages): ?>
+                <a href="?page=<?php echo $page + 1; ?><?php echo $status ? '&status=' . $status : ''; ?><?php echo $search ? '&search=' . $search : ''; ?>">Next</a>
+            <?php endif; ?>
+        </div>
+    </div>
 
     <div id="myModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <form method="POST" action="">
+                <input type="hidden" name="current_status" id="currentStatusInput">
                 <table>
                     <thead>
                         <tr>
@@ -178,6 +235,8 @@ if (isset($_POST['delete_request'])) {
     function showModal(requestId, studentId, formType, requestDate, clearance, status) {
         var modal = document.getElementById("myModal");
         var span = document.getElementsByClassName("close")[0];
+        var urlParams = new URLSearchParams(window.location.search);
+        var currentStatus = urlParams.get('status') || '';
 
         document.getElementById("modalRequestId").value = requestId;
         document.getElementById("modalStudentId").value = studentId;
@@ -185,6 +244,7 @@ if (isset($_POST['delete_request'])) {
         document.getElementById("modalRequestDate").value = requestDate;
         document.getElementById("modalClearance").value = clearance;
         document.getElementById("modalStatus").value = status;
+        document.getElementById("currentStatusInput").value = currentStatus;
 
         modal.style.display = "block";
 

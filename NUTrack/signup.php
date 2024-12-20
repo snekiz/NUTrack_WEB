@@ -12,10 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             VALUES ('$employeeID', '$firstName', '$lastName', '$email', '$password')";
 
     if ($conn->query($sql) === TRUE) {
-        header("Location: index.php?signup=success");
+        echo "<script>alert('Account created successfully.'); window.location.href='index.php';</script>";
         exit();
     } else {
-        echo "Error: " . $conn->error;
+        echo "<script>alert('Error: " . $conn->error . "');</script>";
     }
 
     $conn->close();
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="style.css">
     <title>Signup</title>
 </head>
-<body>
+<body class="login_signup_body">
     <div class="signup-box">
         <div class="logo">
             <img src="img/nulogo.png" class="nulogo" alt="NU logo">
