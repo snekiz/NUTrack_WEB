@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 include 'db_connect.php';
 
 $rowsPerPage = 10;
@@ -21,18 +24,19 @@ if ($search) {
 
 $sql .= " LIMIT $rowsPerPage OFFSET $offset";
 
-$stmt = $conn->prepare($sql);
+$stmt = $database->prepare($sql);
 
 if ($status && $search) {
-    $stmt->bind_param("ss", $status, $search);
+    $stmt->bindValue(1, $status, PDO::PARAM_STR);
+    $stmt->bindValue(2, $search, PDO::PARAM_STR);
 } elseif ($status) {
-    $stmt->bind_param("s", $status);
+    $stmt->bindValue(1, $status, PDO::PARAM_STR);
 } elseif ($search) {
-    $stmt->bind_param("s", $search);
+    $stmt->bindValue(1, $search, PDO::PARAM_STR);
 }
 
 $stmt->execute();
-$result = $stmt->get_result();
+$result = $stmt->fetchAll(PDO::FETCH_ASSOC); // Fetch all results
 
 // SQL query to count total rows for pagination
 $sqlCount = "SELECT COUNT(*) as totalRows FROM tbl_requests WHERE 1=1";
@@ -43,17 +47,18 @@ if ($search) {
     $sqlCount .= " AND request_id = ?";
 }
 
-$stmtCount = $conn->prepare($sqlCount);
+$stmtCount = $database->prepare($sqlCount);
 if ($status && $search) {
-    $stmtCount->bind_param("ss", $status, $search);
+    $stmtCount->bindValue(1, $status, PDO::PARAM_STR);
+    $stmtCount->bindValue(2, $search, PDO::PARAM_STR);
 } elseif ($status) {
-    $stmtCount->bind_param("s", $status);
+    $stmtCount->bindValue(1, $status, PDO::PARAM_STR);
 } elseif ($search) {
-    $stmtCount->bind_param("s", $search);
+    $stmtCount->bindValue(1, $search, PDO::PARAM_STR);
 }
 $stmtCount->execute();
-$totalResult = $stmtCount->get_result();
-$totalRows = $totalResult->fetch_assoc()['totalRows'];
+$totalResult = $stmtCount->fetch(PDO::FETCH_ASSOC); // Correct usage of PDO method
+$totalRows = $totalResult['totalRows'];
 $totalPages = ceil($totalRows / $rowsPerPage);
 
 // Handle request update
@@ -65,8 +70,10 @@ if (isset($_POST['save_changes'])) {
     
     // Secure update query with parameter binding
     $sqlUpdate = "UPDATE tbl_requests SET clearance = ?, status = ? WHERE request_id = ?";
-    $stmtUpdate = $conn->prepare($sqlUpdate);
-    $stmtUpdate->bind_param("ssi", $clearance, $status, $requestId);
+    $stmtUpdate = $database->prepare($sqlUpdate);
+    $stmtUpdate->bindValue(1, $clearance, PDO::PARAM_STR);
+    $stmtUpdate->bindValue(2, $status, PDO::PARAM_STR);
+    $stmtUpdate->bindValue(3, $requestId, PDO::PARAM_INT);
 
     if ($stmtUpdate->execute()) {
         echo "<script>alert('Request updated successfully.'); window.location.href='dashboard.php?status=" . htmlspecialchars($currentStatus) . "';</script>";
@@ -80,19 +87,17 @@ if (isset($_POST['delete_request'])) {
     $requestId = $_POST['request_id'];
 
     $sqlCheck = "SELECT clearance FROM tbl_requests WHERE request_id = ?";
-    $stmtCheck = $conn->prepare($sqlCheck);
-    $stmtCheck->bind_param("i", $requestId);
+    $stmtCheck = $database->prepare($sqlCheck);
+    $stmtCheck->bindValue(1, $requestId, PDO::PARAM_INT);
     $stmtCheck->execute();
-    $stmtCheck->bind_result($clearance);
-    $stmtCheck->fetch();
-    $stmtCheck->close();
+    $clearance = $stmtCheck->fetchColumn(); // Fetch the clearance value
 
     if ($clearance !== 'NOT VALID') {
         echo "<script>alert('Request cannot be deleted. Set clearance to NOT VALID first.'); window.location.href='dashboard.php';</script>";
     } else {
         $sqlDelete = "DELETE FROM tbl_requests WHERE request_id = ?";
-        $stmtDelete = $conn->prepare($sqlDelete);
-        $stmtDelete->bind_param("i", $requestId);
+        $stmtDelete = $database->prepare($sqlDelete);
+        $stmtDelete->bindValue(1, $requestId, PDO::PARAM_INT);
 
         if ($stmtDelete->execute()) {
             echo "<script>alert('Request deleted successfully.'); window.location.href='dashboard.php';</script>";
@@ -158,8 +163,8 @@ if (isset($_POST['delete_request'])) {
             </thead>
             <tbody>
                 <?php
-                if ($result->num_rows > 0) {
-                    while ($row = $result->fetch_assoc()) {
+                if ($result) {
+                    foreach ($result as $row) {
                         echo "<tr onclick=\"showModal('" . htmlspecialchars($row['request_id']) . "', '" . htmlspecialchars($row['student_id']) . "', '" . htmlspecialchars($row['form_type']) . "', '" . htmlspecialchars($row['request_date']) . "', '" . htmlspecialchars($row['clearance']) . "', '" . htmlspecialchars($row['status']) . "')\">
                                 <td>" . htmlspecialchars($row['request_id']) . "</td>
                                 <td>" . htmlspecialchars($row['student_id']) . "</td>
@@ -220,21 +225,39 @@ if (isset($_POST['delete_request'])) {
                             </td>
                             <td>
                                 <select id="modalStatus" name="status">
-                                    <option value="VALIDATING">VALIDATING</option>
-                                    <option value="PROCESSING">PROCESSING</option>
-                                    <option value="READY TO PICKUP">READY TO PICKUP</option>
+                                    <option value="VALIDATING">Validating</option>
+                                    <option value="PROCESSING">Processing</option>
+                                    <option value="READY TO PICKUP">Ready to Pickup</option>
                                 </select>
                             </td>
                         </tr>
                     </tbody>
                 </table>
-                <div class="modal-actions">
-                    <button type="submit" name="save_changes">Save</button>
-                    <button type="submit" name="delete_request">Delete</button>
-                </div>
+                <button type="submit" name="save_changes">Save Changes</button>
+                <button type="submit" name="delete_request">Delete Request</button>
             </form>
         </div>
     </div>
-    <script src="script.js"></script>
+
+    <script>
+        function showModal(requestId, studentId, formType, requestDate, clearance, status) {
+            document.getElementById("modalRequestId").value = requestId;
+            document.getElementById("modalStudentId").value = studentId;
+            document.getElementById("modalFormType").value = formType;
+            document.getElementById("modalRequestDate").value = requestDate;
+            document.getElementById("modalClearance").value = clearance;
+            document.getElementById("modalStatus").value = status;
+            document.getElementById("currentStatusInput").value = status;
+
+            document.getElementById("myModal").style.display = "block";
+        }
+
+        var modal = document.getElementById("myModal");
+        var span = document.getElementsByClassName("close")[0];
+
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+    </script>
 </body>
 </html>
