@@ -2,25 +2,30 @@
 include 'db_connect.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $firstName = $conn->real_escape_string(trim($_POST['firstName']));
-    $lastName = $conn->real_escape_string(trim($_POST['lastName']));
-    $email = $conn->real_escape_string(trim($_POST['email']));
-    $employeeID = $conn->real_escape_string(trim($_POST['employeeID']));
-    $password = $conn->real_escape_string(trim($_POST['password']));
+    $firstName = trim($_POST['firstName']);
+    $lastName = trim($_POST['lastName']);
+    $email = trim($_POST['email']);
+    $employeeID = trim($_POST['employeeID']);
+    $password = password_hash(trim($_POST['password']), PASSWORD_BCRYPT);
 
     $sql = "INSERT INTO tbl_employeeacc (employee_id, e_FirstName, e_LastName, e_Email, e_Password) 
-            VALUES ('$employeeID', '$firstName', '$lastName', '$email', '$password')";
+            VALUES (:employeeID, :firstName, :lastName, :email, :password)";
+    $stmt = $database->prepare($sql);
 
-    if ($conn->query($sql) === TRUE) {
-        echo "<script>alert('Account created successfully.'); window.location.href='index.php';</script>";
-        exit();
+    if ($stmt->execute([
+        'employeeID' => $employeeID,
+        'firstName' => $firstName,
+        'lastName' => $lastName,
+        'email' => $email,
+        'password' => $password
+    ])) {
+        echo "User registered successfully.";
     } else {
-        echo "<script>alert('Error: " . $conn->error . "');</script>";
+        echo "Error registering user.";
     }
-
-    $conn->close();
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

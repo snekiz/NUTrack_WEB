@@ -8,12 +8,13 @@ $offset = ($page - 1) * $rowsPerPage;
 $status = isset($_GET['status']) ? $_GET['status'] : null;
 $search = isset($_GET['search']) ? $_GET['search'] : null;
 
+// Prepare the SQL query for fetching requests
 $sql = "SELECT request_id, student_id, form_type, request_date, clearance, status FROM tbl_requests WHERE 1=1";
 
+// Bind parameters based on user inputs
 if ($status) {
     $sql .= " AND status = ?";
 }
-
 if ($search) {
     $sql .= " AND request_id = ?";
 }
@@ -33,6 +34,7 @@ if ($status && $search) {
 $stmt->execute();
 $result = $stmt->get_result();
 
+// SQL query to count total rows for pagination
 $sqlCount = "SELECT COUNT(*) as totalRows FROM tbl_requests WHERE 1=1";
 if ($status) {
     $sqlCount .= " AND status = ?";
@@ -40,6 +42,7 @@ if ($status) {
 if ($search) {
     $sqlCount .= " AND request_id = ?";
 }
+
 $stmtCount = $conn->prepare($sqlCount);
 if ($status && $search) {
     $stmtCount->bind_param("ss", $status, $search);
@@ -53,24 +56,26 @@ $totalResult = $stmtCount->get_result();
 $totalRows = $totalResult->fetch_assoc()['totalRows'];
 $totalPages = ceil($totalRows / $rowsPerPage);
 
+// Handle request update
 if (isset($_POST['save_changes'])) {
     $requestId = $_POST['request_id'];
     $clearance = $_POST['clearance'];
     $status = $_POST['status'];
     $currentStatus = isset($_POST['current_status']) ? $_POST['current_status'] : '';
     
-        $sqlUpdate = "UPDATE tbl_requests SET clearance = ?, status = ? WHERE request_id = ?";
-        $stmtUpdate = $conn->prepare($sqlUpdate);
-        $stmtUpdate->bind_param("ssi", $clearance, $status, $requestId);
+    // Secure update query with parameter binding
+    $sqlUpdate = "UPDATE tbl_requests SET clearance = ?, status = ? WHERE request_id = ?";
+    $stmtUpdate = $conn->prepare($sqlUpdate);
+    $stmtUpdate->bind_param("ssi", $clearance, $status, $requestId);
 
-        if ($stmtUpdate->execute()) {
-            echo "<script>alert('Request updated successfully.'); window.location.href='dashboard.php?status=$currentStatus';</script>";
-        } else {
-            echo "<script>alert('Error updating request.');</script>";
-        }
-    } 
+    if ($stmtUpdate->execute()) {
+        echo "<script>alert('Request updated successfully.'); window.location.href='dashboard.php?status=" . htmlspecialchars($currentStatus) . "';</script>";
+    } else {
+        echo "<script>alert('Error updating request.');</script>";
+    }
+}
 
-
+// Handle request delete
 if (isset($_POST['delete_request'])) {
     $requestId = $_POST['request_id'];
 
@@ -155,13 +160,13 @@ if (isset($_POST['delete_request'])) {
                 <?php
                 if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
-                        echo "<tr onclick=\"showModal('{$row['request_id']}', '{$row['student_id']}', '{$row['form_type']}', '{$row['request_date']}', '{$row['clearance']}', '{$row['status']}')\">
-                                <td>{$row['request_id']}</td>
-                                <td>{$row['student_id']}</td>
-                                <td>{$row['form_type']}</td>
-                                <td>{$row['request_date']}</td>
-                                <td>{$row['clearance']}</td>
-                                <td>{$row['status']}</td>
+                        echo "<tr onclick=\"showModal('" . htmlspecialchars($row['request_id']) . "', '" . htmlspecialchars($row['student_id']) . "', '" . htmlspecialchars($row['form_type']) . "', '" . htmlspecialchars($row['request_date']) . "', '" . htmlspecialchars($row['clearance']) . "', '" . htmlspecialchars($row['status']) . "')\">
+                                <td>" . htmlspecialchars($row['request_id']) . "</td>
+                                <td>" . htmlspecialchars($row['student_id']) . "</td>
+                                <td>" . htmlspecialchars($row['form_type']) . "</td>
+                                <td>" . htmlspecialchars($row['request_date']) . "</td>
+                                <td>" . htmlspecialchars($row['clearance']) . "</td>
+                                <td>" . htmlspecialchars($row['status']) . "</td>
                               </tr>";
                     }
                 } else {
@@ -176,11 +181,11 @@ if (isset($_POST['delete_request'])) {
         <span>Page <?php echo $page; ?> of <?php echo $totalPages; ?></span>
         <div class="pagination">
             <?php if ($page > 1): ?>
-                <a href="?page=<?php echo $page - 1; ?><?php echo $status ? '&status=' . $status : ''; ?><?php echo $search ? '&search=' . $search : ''; ?>">Previous</a>
+                <a href="?page=<?php echo $page - 1; ?><?php echo $status ? '&status=' . urlencode($status) : ''; ?><?php echo $search ? '&search=' . urlencode($search) : ''; ?>">Previous</a>
             <?php endif; ?>
 
             <?php if ($page < $totalPages): ?>
-                <a href="?page=<?php echo $page + 1; ?><?php echo $status ? '&status=' . $status : ''; ?><?php echo $search ? '&search=' . $search : ''; ?>">Next</a>
+                <a href="?page=<?php echo $page + 1; ?><?php echo $status ? '&status=' . urlencode($status) : ''; ?><?php echo $search ? '&search=' . urlencode($search) : ''; ?>">Next</a>
             <?php endif; ?>
         </div>
     </div>

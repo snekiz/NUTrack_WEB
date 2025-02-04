@@ -1,12 +1,26 @@
 <?php
-$servername = "localhost";
-$username = "root"; 
-$password = ""; 
-$dbname = "db_nutrack"; 
+class Database {
+    private $pdo;
 
-$conn = new mysqli($servername, $username, $password, $dbname);
+    public function __construct($host, $dbname, $username, $password) {
+        $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
+        $options = [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ];
 
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+        try {
+            $this->pdo = new PDO($dsn, $username, $password, $options);
+        } catch (PDOException $e) {
+            die("Database connection failed: " . $e->getMessage());
+        }
+    }
+
+    public function prepare($sql) {
+        return $this->pdo->prepare($sql);
+    }
 }
+
+$database = new Database('localhost', 'db_nutrack', 'root', '');
 ?>

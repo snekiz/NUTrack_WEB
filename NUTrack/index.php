@@ -2,30 +2,25 @@
 include 'db_connect.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $employeeID = $conn->real_escape_string(trim($_POST['employeeID']));
-    $password = $conn->real_escape_string(trim($_POST['password']));
+    $employeeID = trim($_POST['employeeID']);
+    $password = trim($_POST['password']);
 
-    $sql = "SELECT * FROM tbl_employeeacc WHERE employee_id='$employeeID'";
-    $result = $conn->query($sql);
+    $sql = "SELECT * FROM tbl_employeeacc WHERE employee_id = :employeeID";
+    $stmt = $database->prepare($sql);
+    $stmt->execute(['employeeID' => $employeeID]);
+    $user = $stmt->fetch();
 
-    if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        if ($password === $row['e_Password']) {
-            session_start();
-            $_SESSION['employee_id'] = $row['employee_id'];
-            $_SESSION['e_Fname'] = $row['e_Fname'];
-            $_SESSION['e_Lname'] = $row['e_Lname'];
-            header("Location: dashboard.php");
-            exit();
-        } else {
-            echo "<script>alert('Invalid password!');</script>";
-        }
+    if ($user && password_verify($password, $user['e_Password'])) {
+        session_start();
+        $_SESSION['user_id'] = $user['id'];
+        header('Location: dashboard.php');
+        exit;
     } else {
-        echo "<script>alert('No account found with that Employee ID.');</script>";
+        echo "Invalid login credentials.";
     }
-    $conn->close();
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
